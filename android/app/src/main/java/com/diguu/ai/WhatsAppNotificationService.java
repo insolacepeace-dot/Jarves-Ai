@@ -112,7 +112,7 @@ public class WhatsAppNotificationService extends NotificationListenerService {
                 return respJson.optString("reply", "Hii! Tarun is currently occupied. Will catch up shortly!");
             }
         } catch (Exception e) {
-            Log.warn(TAG, "Failed to connect to AI server endpoint, using dynamic fallback", e);
+            Log.w(TAG, "Failed to connect to AI server endpoint, using dynamic fallback", e);
         }
         return "Hii! Thanks for reaching out. I'm currently away and will reply as soon as possible!";
     }

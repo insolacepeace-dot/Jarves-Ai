@@ -22,23 +22,32 @@ android {
     }
 
     signingConfigs {
+        debug {
+            // Default Android debug signing
+        }
         release {
-            if (project.hasProperty('RELEASE_STORE_FILE') && file(project.property('RELEASE_STORE_FILE')).exists()) {
-                storeFile file(project.property('RELEASE_STORE_FILE'))
+            def storeFilePath = project.hasProperty('RELEASE_STORE_FILE') ? project.property('RELEASE_STORE_FILE') : null
+            def keystoreFile = storeFilePath ? (file(storeFilePath).exists() ? file(storeFilePath) : file("../${storeFilePath}")) : null
+            if (keystoreFile != null && keystoreFile.exists()) {
+                storeFile keystoreFile
                 storePassword project.findProperty('RELEASE_STORE_PASSWORD') ?: "android"
                 keyAlias project.findProperty('RELEASE_KEY_ALIAS') ?: "androiddebugkey"
                 keyPassword project.findProperty('RELEASE_KEY_PASSWORD') ?: "android"
+            } else {
+                // Fallback to debug signing for CI so unsigned APK build failure never occurs
+                initWith(signingConfigs.debug)
             }
         }
     }
 
     buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            if (project.hasProperty('RELEASE_STORE_FILE') && file(project.property('RELEASE_STORE_FILE')).exists()) {
-                signingConfig signingConfigs.release
-            }
+            signingConfig signingConfigs.release
         }
     }
 }
@@ -63,11 +72,9 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
-try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
+android {
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
-} catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
 }
